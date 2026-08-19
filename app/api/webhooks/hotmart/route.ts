@@ -36,6 +36,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verificarHotmart, esReciente } from '@/lib/hotmart-verify';
+import { enviarBienvenida, enviarCancelacion } from '@/lib/email';
 import type { Database } from '@/lib/supabase/types';
 import crypto from 'node:crypto';
 
@@ -53,6 +54,17 @@ function clienteAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!claveMaestra || !url) return null;
   return createClient<Database>(url, claveMaestra, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+// El correo NUNCA debe tumbar la respuesta al webhook: si Resend falla, el acceso ya
+// quedó concedido/cerrado en la base de datos (lo que de verdad importa), y perder el
+// correo de cortesía no debe hacer que Hotmart reintente un evento ya aplicado.
+async function enviarMejorEsfuerzo(envio: () => Promise<unknown>, contexto: string) {
+  try {
+    await envio();
+  } catch (err) {
+    console.error(`[webhook hotmart] no se pudo enviar el correo de ${contexto}:`, err);
+  }
 }
 
 async function registrarLog(
@@ -170,6 +182,7 @@ export async function POST(req: NextRequest) {
         await admin.from('perfiles').update({ activo: true }).eq('id', existente.id);
       }
       await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: 'reactivada' });
+      await enviarMejorEsfuerzo(() => enviarBienvenida(correo), 'bienvenida (reactivada)');
     } else {
       const { error: errorCrear } = await admin.auth.admin.createUser({ email: correo, email_confirm: true });
       if (errorCrear) {
@@ -190,6 +203,7 @@ export async function POST(req: NextRequest) {
         // sola, con activo=true por default — no hace falta nada más aquí.
         await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: 'cuenta creada' });
       }
+      await enviarMejorEsfuerzo(() => enviarBienvenida(correo), 'bienvenida (cuenta nueva)');
     }
   } else if (EVENTOS_REVOCAR.has(evento)) {
     const { data: existente } = await admin.from('perfiles').select('id').eq('email', correo).maybeSingle();
@@ -201,6 +215,12 @@ export async function POST(req: NextRequest) {
     }
   } else if (EVENTOS_SOLO_REGISTRO.has(evento)) {
     await registrarLog(admin, { event_id: eventId, type: evento, result: 'ignored', detail: 'cancelación — acceso sigue hasta fin de ciclo' });
+    // Los payloads de PRUEBA de Hotmart para este evento no siempre traen un
+    // comprador real (ver comentario del punto 7) — solo se manda si hay un
+    // correo de verdad.
+    if (CORREO_OK.test(correo)) {
+      await enviarMejorEsfuerzo(() => enviarCancelacion(correo), 'cancelación');
+    }
   } else {
     await registrarLog(admin, { event_id: eventId, type: evento, result: 'ignored', detail: 'evento sin mapear' });
   }

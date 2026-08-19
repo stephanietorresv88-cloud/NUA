@@ -92,7 +92,7 @@ export default function Entrar() {
     }
 
     await migrarOnboardingAnonimo(supabase);
-    router.push('/rutina');
+    router.push('/hoy');
   };
 
   const btn =
