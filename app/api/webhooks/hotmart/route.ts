@@ -172,19 +172,24 @@ export async function POST(req: NextRequest) {
       await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: 'reactivada' });
     } else {
       const { error: errorCrear } = await admin.auth.admin.createUser({ email: correo, email_confirm: true });
-      // "Ya existe" no es un fallo real — puede pasar si `perfiles.email` quedó
-      // desactualizado respecto a auth.users. Se detecta por CÓDIGO, no por el
-      // texto del mensaje (el texto varía entre versiones de la API y ya se vio
-      // fallar en la prueba real con Hotmart: "already been registered" no
-      // coincidía con el mensaje real que devolvió Supabase).
-      const yaExistia = errorCrear && (errorCrear.code === 'email_exists' || errorCrear.status === 422);
-      if (errorCrear && !yaExistia) {
-        await registrarLog(admin, { event_id: eventId, type: evento, result: 'error', detail: `no se pudo crear la cuenta: ${errorCrear.message}` });
-        return NextResponse.json({ error: 'internal' }, { status: 500 });
+      if (errorCrear) {
+        // Hotmart puede mandar dos eventos de la misma compra (p.ej.
+        // PURCHASE_COMPLETE y PURCHASE_APPROVED) a milisegundos de distancia.
+        // Si el otro evento ya creó la cuenta mientras esta petición estaba en
+        // vuelo, createUser() falla aquí — pero no es un error real, es una
+        // carrera ganada por el evento gemelo. Se re-verifica por email antes
+        // de rendirse: si la cuenta YA existe ahora, se trata como éxito.
+        const { data: creadaPorCarrera } = await admin.from('perfiles').select('id').eq('email', correo).maybeSingle();
+        if (!creadaPorCarrera) {
+          await registrarLog(admin, { event_id: eventId, type: evento, result: 'error', detail: `no se pudo crear la cuenta: ${errorCrear.message}` });
+          return NextResponse.json({ error: 'internal' }, { status: 500 });
+        }
+        await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: 'la cuenta ya existía (carrera con otro evento)' });
+      } else {
+        // El trigger crear_perfil_para_nuevo_usuario() crea la fila en perfiles
+        // sola, con activo=true por default — no hace falta nada más aquí.
+        await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: 'cuenta creada' });
       }
-      // El trigger crear_perfil_para_nuevo_usuario() crea la fila en perfiles
-      // sola, con activo=true por default — no hace falta nada más aquí.
-      await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: yaExistia ? 'la cuenta ya existía' : 'cuenta creada' });
     }
   } else if (EVENTOS_REVOCAR.has(evento)) {
     const { data: existente } = await admin.from('perfiles').select('id').eq('email', correo).maybeSingle();
