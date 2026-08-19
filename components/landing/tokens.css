@@ -1,0 +1,103 @@
+/* ============================================================================
+   NUA — tokens.css (tematizado desde FICHA-ARTE.md, 2026-08-12)
+   EL ÚNICO ARCHIVO DE ESTILO QUE SE TEMATIZA. Ningún .tsx del kit lleva hex.
+   ============================================================================ */
+
+:root {
+  /* ── SUPERFICIES (3 niveles: base / elevada / hundida) ──
+     El crema cálido se retiró el 2026-08-12: sobre pantalla se leía apagado,
+     como papel de periódico. La base ahora es un blanco con un soplo de lavanda:
+     limpio y luminoso, que es lo que hace que un pastel se vea premium. */
+  /* Tinte subido el 2026-08-13: con #FCFBFE la base y las tarjetas blancas eran
+     indistinguibles y las cards no se leían elevadas (defecto del veredicto v3). */
+  --bg: #f9f7fd;              /* casi-blanco con tinte lavanda — nunca #FFF puro */
+  --surface: #ffffff;         /* tarjetas */
+  --surface-2: #f2eefb;       /* hundido: wells, frames de placeholder */
+
+  /* ── BLOQUES DE COLOR (el ritmo pastel del moodboard del usuario) ──
+     Las secciones alternan estos bloques en vez de un fondo plano: es lo que
+     da el movimiento del feed pastel sin salirse de los colores de NUA. */
+  /* ⚠️ SON DOS LAVANDAS, NO LAVANDA + AMARILLO. El mantequilla se retiró de los
+     fondos el 2026-08-12: al pintar dos secciones enteras dejaba de significar
+     "hoy tienes energía" y pasaba a ser decoración, contra la doctrina de
+     FICHA-ARTE. El ritmo lo dan dos intensidades de la misma lavanda. */
+  --bloque-lavanda: #efeafb;
+  --bloque-lavanda-2: #f7f4fd;
+
+  /* ── TEXTO (morado profundo con tinte — familia única) ── */
+  --text-primary: #453a6b;    /* 9.4:1 sobre --bg · 10.1:1 sobre --surface */
+  --text-secondary: #6e6486;  /* 5.7:1 sobre --bg */
+  --text-tertiary: #7b70a3;   /* 4.5:1 sobre --bg — mínimo AA verificado */
+
+  /* ── MARCA ── */
+  --accent: #6e5b9c;          /* lavanda profunda — CTA, íconos activos, dato clave */
+  --accent-2: #f8e9a1;        /* amarillo mantequilla — SOLO el estado ENERGÍA (ver ficha) */
+
+  /* ── FORMA ── */
+  --radius-card: 18px;
+  --radius-inner: 12px; /* lo que va DENTRO de una card: nunca el mismo radio que su contenedor */
+  --radius-button: 999px;
+  /* Altura reservada bajo la barra de compra fija del paywall. La escala de
+     espaciado del proyecto llega hasta 64px, así que este colchón va como token
+     en vez de como número suelto en la clase. */
+  --h-barra-compra: 144px;
+  /* Nav inferior fija de la app interna (Hoy/Archivo/Ajustes): 64px de barra +
+     colchón para el safe-area-inset-bottom de los celulares con gesto. */
+  --h-nav-inferior: 96px;
+
+  /* ── TIPOGRAFÍA (2 familias de la ficha) ── */
+  --font-display: var(--font-gloock), Georgia, serif;
+  --font-body: var(--font-figtree), 'Segoe UI', sans-serif;
+
+  /* ── ESCALA DE LA FICHA (display 41 / title 26 / body 15 / label 10.5) ──
+     Dos desvíos deliberados y anotados:
+     · --txt-title = 30px en pantallas de conversión: el blueprint del paywall (50 §C1)
+       fija 28-32px para el titular a 375px; a 41px ocupa cuatro líneas y empuja el
+       precio fuera de la pantalla.
+     · --txt-label = 12px, no 10.5: el mínimo del SO para labels es 11-13px.
+     Tres tamaños en pantalla, no cinco: el precio usa --txt-title (es el otro
+     número héroe, y a 41px no cabe "USD 39,99" con su sufijo). */
+  --txt-title: 30px;
+  /* El número héroe de una card (minutos del ritual): más grande que el título
+     de la página a propósito — es SU propio dato dominante, no compite con el
+     H1 (mismo patrón que los Ejemplos A/B canónicos: 34-40px). */
+  --txt-hero: 36px;
+  --txt-subtitle: 19px; /* el escalón medio: nombre de plan, pregunta, título de card */
+  --txt-body: 15px;
+  --txt-label: 12px;
+
+  /* ── SOMBRAS con el tinte lavanda de marca (nunca negro puro) ── */
+  --shadow-1: 0 1px 2px rgb(69 58 107 / 0.06);
+  --shadow-2: 0 12px 32px -12px rgb(69 58 107 / 0.18);
+
+  /* ── DERIVADOS (no se tocan) ── */
+  --chip-bg: color-mix(in oklab, var(--accent) 10%, transparent);
+  /* Lo que va ENCIMA del acento (texto de CTA, checks dentro del círculo lavanda). */
+  --sobre-acento: #ffffff;
+  /* Semánticos de la FICHA-ARTE, SOLO en su función (nunca de decoración).
+     NUA no usa verde: el éxito se dice con la propia lavanda. */
+  --error: #a4443f;
+  --aviso: #b8863c;
+
+  /* ── EL COLOR ES LENGUAJE (doctrina NUA — los 3 estados del Dial de Energía) ── */
+  --estado-reserva: #e5e0f6;
+  --estado-media: #c7bae8;
+  --estado-energia: #f8e9a1;
+  --dial-inactivo: #efebf9;
+  --dial-aguja: #453a6b;
+}
+
+/* Base mínima que el kit asume (no tematizar) */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}

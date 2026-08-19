@@ -1,0 +1,125 @@
+@import "tailwindcss";
+@import "../components/landing/tokens.css";
+
+/* ── FAIL-OPEN DEL REVEAL (va FUERA de @layer para ganarle a los estilos inline
+   que motion pone en cada sección) ───────────────────────────────────────────
+   Sin JavaScript, `html` no lleva la clase `js` y todo el contenido se muestra.
+   Con JavaScript, esta regla no aplica y las animaciones de entrada funcionan
+   normal. Una landing nunca puede quedarse en blanco por un script que no cargó. */
+html:not(.js) main *,
+html:not(.js) section *,
+html:not(.js) footer * {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ── SKELETON (49 §8) — shimmer, nunca spinner genérico ── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  animation: skeleton-shimmer 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* ── PROSA LEGAL — tipografía de lectura larga para Privacidad/Términos/
+   Reembolsos/Aviso de IA. Sin plugin de prose: son 4 páginas, no vale la pena
+   la dependencia. Escala 4·8·12·16·24·32 y los mismos tokens de color. ── */
+.legal-prose h2 {
+  margin-top: 32px;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-size: var(--txt-subtitle);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.legal-prose h2:first-child {
+  margin-top: 0;
+}
+.legal-prose p {
+  margin-top: 12px;
+  font-size: var(--txt-body);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.legal-prose ul {
+  margin-top: 12px;
+  padding-left: 20px;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.legal-prose li {
+  font-size: var(--txt-body);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.legal-prose strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.legal-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@layer utilities {
+  /* ── CORRECCIÓN DE CONTRASTE EN EL BLOQUE INVERTIDO ────────────────────────
+     §9 CTA FINAL pinta el fondo con --text-primary (#453A6B) y <Accent> usa
+     --accent (#6E5B9C): morado sobre morado = 1.76:1, ilegible. En NUA el acento
+     y el color de texto son la MISMA familia, así que ahí la palabra resaltada
+     sube a lavanda clara (≈5.6:1). Es un ajuste de PALETA de este proyecto, no
+     un fallo del kit — por eso vive aquí y no en el componente. */
+  #cta-final h2 span {
+    color: var(--estado-media);
+  }
+
+  /* ── RITMO DE BLOQUES PASTEL ───────────────────────────────────────────────
+     El fondo plano se leía "de periódico" y la página se sentía monocroma. En vez
+     de un solo color, las secciones alternan bloques de los DOS colores de NUA —
+     el ritmo del feed pastel de la referencia del usuario (2026-08-12), sin añadir
+     ni un color nuevo. Se selecciona por aria-label para no tocar el kit. */
+  #hero,
+  section[aria-label='La app por dentro'] {
+    background: var(--bloque-lavanda);
+  }
+
+  /* Antes iban en mantequilla. Se cambiaron a la lavanda clara para que el
+     amarillo vuelva a significar SOLO "hoy tienes energía" (FICHA-ARTE). */
+  section[aria-label='Cómo funciona'],
+  section[aria-label='Garantía'] {
+    background: var(--bloque-lavanda-2);
+  }
+
+  section[aria-label='El problema'],
+  section[aria-label='El costo de seguir igual'],
+  section[aria-label='Planes y precios'],
+  section[aria-label='Preguntas frecuentes'] {
+    background: var(--surface);
+  }
+
+  /* Las tarjetas dentro de un bloque de color van en blanco puro: es el contraste
+     que hace que un pastel se vea caro en vez de lavado. */
+  section[aria-label='Cómo funciona'] [class*='bg-[var(--surface)]'],
+  section[aria-label='Garantía'] [class*='bg-[var(--surface)]'] {
+    background: #ffffff;
+  }
+}
