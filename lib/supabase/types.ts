@@ -94,6 +94,7 @@ export type Database = {
       }
       perfiles: {
         Row: {
+          activo: boolean
           created_at: string
           dolor: string | null
           email: string | null
@@ -104,6 +105,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activo?: boolean
           created_at?: string
           dolor?: string | null
           email?: string | null
@@ -114,6 +116,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activo?: boolean
           created_at?: string
           dolor?: string | null
           email?: string | null
@@ -122,6 +125,27 @@ export type Database = {
           role?: string
           source?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      processed_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          payload_hash: string | null
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          payload_hash?: string | null
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          payload_hash?: string | null
+          processed_at?: string
         }
         Relationships: []
       }
@@ -158,6 +182,33 @@ export type Database = {
           rutina_id?: string
           te_llevas?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_log: {
+        Row: {
+          detail: string | null
+          event_id: string | null
+          id: number
+          received_at: string
+          result: string
+          type: string | null
+        }
+        Insert: {
+          detail?: string | null
+          event_id?: string | null
+          id?: number
+          received_at?: string
+          result: string
+          type?: string | null
+        }
+        Update: {
+          detail?: string | null
+          event_id?: string | null
+          id?: number
+          received_at?: string
+          result?: string
+          type?: string | null
         }
         Relationships: []
       }
