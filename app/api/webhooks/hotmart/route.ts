@@ -150,10 +150,16 @@ export async function POST(req: NextRequest) {
   //    mantener todavía; si algún día hay más de un producto en la misma
   //    cuenta, este es el lugar para filtrar por payload.data.product.id).
 
-  // 7. Aplicar la acción según el tipo de evento.
-  if (!CORREO_OK.test(correo)) {
-    await registrarLog(admin, { event_id: eventId, type: evento, result: 'error', detail: 'sin correo válido en el payload' });
-    return NextResponse.json({ received: true, status: 'sin correo válido' });
+  // 7. Aplicar la acción según el tipo de evento. El correo solo hace falta
+  //    para las ramas que de verdad tocan una cuenta (conceder/revocar) — los
+  //    payloads de PRUEBA de Hotmart para eventos de solo-registro (cancelación,
+  //    etc.) no siempre traen un comprador real, y no hay nada que hacer con
+  //    el correo ahí de todas formas.
+  if (EVENTOS_CONCEDER.has(evento) || EVENTOS_REVOCAR.has(evento)) {
+    if (!CORREO_OK.test(correo)) {
+      await registrarLog(admin, { event_id: eventId, type: evento, result: 'error', detail: 'sin correo válido en el payload' });
+      return NextResponse.json({ received: true, status: 'sin correo válido' });
+    }
   }
 
   if (EVENTOS_CONCEDER.has(evento)) {
@@ -166,13 +172,19 @@ export async function POST(req: NextRequest) {
       await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: 'reactivada' });
     } else {
       const { error: errorCrear } = await admin.auth.admin.createUser({ email: correo, email_confirm: true });
-      if (errorCrear && !/already been registered/i.test(errorCrear.message)) {
-        await registrarLog(admin, { event_id: eventId, type: evento, result: 'error', detail: 'no se pudo crear la cuenta' });
+      // "Ya existe" no es un fallo real — puede pasar si `perfiles.email` quedó
+      // desactualizado respecto a auth.users. Se detecta por CÓDIGO, no por el
+      // texto del mensaje (el texto varía entre versiones de la API y ya se vio
+      // fallar en la prueba real con Hotmart: "already been registered" no
+      // coincidía con el mensaje real que devolvió Supabase).
+      const yaExistia = errorCrear && (errorCrear.code === 'email_exists' || errorCrear.status === 422);
+      if (errorCrear && !yaExistia) {
+        await registrarLog(admin, { event_id: eventId, type: evento, result: 'error', detail: `no se pudo crear la cuenta: ${errorCrear.message}` });
         return NextResponse.json({ error: 'internal' }, { status: 500 });
       }
       // El trigger crear_perfil_para_nuevo_usuario() crea la fila en perfiles
       // sola, con activo=true por default — no hace falta nada más aquí.
-      await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: 'cuenta creada' });
+      await registrarLog(admin, { event_id: eventId, type: evento, result: 'applied', detail: yaExistia ? 'la cuenta ya existía' : 'cuenta creada' });
     }
   } else if (EVENTOS_REVOCAR.has(evento)) {
     const { data: existente } = await admin.from('perfiles').select('id').eq('email', correo).maybeSingle();
