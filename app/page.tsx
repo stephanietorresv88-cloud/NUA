@@ -180,14 +180,14 @@ export default function LandingNua() {
              a 39,99 son 31,89 de ahorro (44%), no dos meses. Un número inventado
              sobre dinero, en la página cuya promesa es que aquí nadie te sorprende
              con un cobro, es el peor error posible. */
-          badge: 'AHORRAS 44%',
-          precioMes: 'USD 39,99',
+          badge: 'AHORRAS 48%',
+          precioMes: 'USD 24,99',
           sufijo: '/año',
-          descomposicionDia: 'Equivale a USD 3,33 al mes',
+          descomposicionDia: 'Equivale a USD 2,08 al mes',
           totalAnual: 'Un solo cobro al año · cancelas cuando quieras',
           /* El ahorro se dice UNA vez. Antes aparecía en el badge, aquí y en las
              features: tres veces la misma frase resta credibilidad. */
-          ahorro: 'Te ahorras USD 31,89 frente a pagar mes a mes',
+          ahorro: 'Te ahorras USD 22,89 frente a pagar mes a mes',
           ctaLabel: 'Empezar con el plan anual',
           ctaHref: `${CTA_HREF}?plan=anual`,
           features: [
@@ -198,7 +198,7 @@ export default function LandingNua() {
         }}
         mensual={{
           nombre: 'Mensual',
-          precioMes: 'USD 5,99',
+          precioMes: 'USD 3,99',
           ctaLabel: 'Empezar con el plan mensual',
           ctaHref: `${CTA_HREF}?plan=mensual`,
           features: [
@@ -276,6 +276,7 @@ export default function LandingNua() {
         ctaLabel={CTA_LABEL}
         ctaHref={CTA_HREF}
         recap="Empieza sin tarjeta · 30 días con la Garantía del Día Difícil"
+        photoSrc="/fotos/calma-atardecer.webp"
         /* Los minutos se alinean con lo que la app entrega de verdad (5/15/20,
            decididos por la dueña el 2026-08-13). Decían 3/10/30. */
         psMarked="PS: NUA no te pide ser más constante. Ajusta tu ritual a la energía con la que llegas — 5, 15 o 20 minutos — para que el día difícil también cuente."

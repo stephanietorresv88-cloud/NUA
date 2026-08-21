@@ -46,7 +46,7 @@ const DEMOS: Record<EstadoId, ReturnType<typeof rutinasDe>[number]> = {
 type PlanId = 'anual' | 'mensual';
 
 /** Precios de FICHA-MERCADO §1. Números, no texto: todo lo demás se deriva. */
-const PRECIO: Record<PlanId, number> = { mensual: 5.99, anual: 39.99 };
+const PRECIO: Record<PlanId, number> = { mensual: 3.99, anual: 24.99 };
 
 const usd = (n: number) => `USD ${n.toFixed(2).replace('.', ',')}`;
 

@@ -27,6 +27,10 @@ export interface CtaFinalProps {
   psMarked?: string;
   /** default 'cta-final' — lo observa StickyCtaMobile para ocultarse. */
   id?: string;
+  /** Foto opcional de fondo (el "después" emocional) — con overlay oscuro para
+   *  que el texto siga con contraste alto. Sin ella, el bloque queda igual que
+   *  antes (fondo sólido invertido). */
+  photoSrc?: string;
 }
 
 export function CtaFinal({
@@ -37,6 +41,7 @@ export function CtaFinal({
   recap,
   psMarked,
   id = 'cta-final',
+  photoSrc,
 }: CtaFinalProps) {
   warnCopy('CtaFinal → h2', h2Marked, 8);
   warnCopy('CtaFinal → future pacing', futurePacingMarked, 24);
@@ -50,13 +55,24 @@ export function CtaFinal({
       className="relative overflow-hidden py-20 md:py-24"
       style={{ background: 'var(--text-primary)' }}
     >
-      {/* Profundidad también en el bloque invertido: radial sutil del acento */}
+      {photoSrc && (
+        <img
+          src={photoSrc}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover opacity-40"
+        />
+      )}
+      {/* Profundidad también en el bloque invertido: radial sutil del acento.
+          Con foto de fondo, se suma un velo oscuro para que el texto siga AA. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         style={{
-          background:
-            'radial-gradient(720px 420px at 50% 0%, color-mix(in oklab, var(--accent) 16%, transparent) 0%, transparent 60%)',
+          background: photoSrc
+            ? 'linear-gradient(180deg, color-mix(in oklab, var(--text-primary) 88%, transparent) 0%, color-mix(in oklab, var(--text-primary) 75%, transparent) 100%)'
+            : 'radial-gradient(720px 420px at 50% 0%, color-mix(in oklab, var(--accent) 16%, transparent) 0%, transparent 60%)',
         }}
       />
 
