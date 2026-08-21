@@ -61,17 +61,19 @@ export function CtaFinal({
           alt=""
           aria-hidden="true"
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover opacity-40"
+          className="absolute inset-0 h-full w-full object-cover opacity-70"
         />
       )}
       {/* Profundidad también en el bloque invertido: radial sutil del acento.
-          Con foto de fondo, se suma un velo oscuro para que el texto siga AA. */}
+          Con foto de fondo, se suma un velo oscuro para que el texto siga AA —
+          más fuerte donde vive el texto (centro), más suave en los bordes para
+          que la foto siga siendo reconocible. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         style={{
           background: photoSrc
-            ? 'linear-gradient(180deg, color-mix(in oklab, var(--text-primary) 88%, transparent) 0%, color-mix(in oklab, var(--text-primary) 75%, transparent) 100%)'
+            ? 'radial-gradient(680px 520px at 50% 45%, color-mix(in oklab, var(--text-primary) 72%, transparent) 0%, color-mix(in oklab, var(--text-primary) 40%, transparent) 100%)'
             : 'radial-gradient(720px 420px at 50% 0%, color-mix(in oklab, var(--accent) 16%, transparent) 0%, transparent 60%)',
         }}
       />
