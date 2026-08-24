@@ -8,10 +8,27 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion, type Variants } from 'motion/react';
 import { Camera } from 'lucide-react';
 import { CtaButton } from './ui';
 import { MarkedCopy, truncarMarcado, warnCopy } from './MarkedCopy';
+
+// Entrada escalonada (baseline #1 de las 7 animaciones no negociables): cada
+// pieza entra 70ms después de la anterior, en vez de un solo fundido plano.
+const contenedor: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+};
+const pieza: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
+};
+// El Dial es el objeto que diferencia a NUA: entra con su propio momento
+// (leve escala, no solo fade), después de que el texto ya aterrizó.
+const piezaVisual: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+};
 
 export interface HeroProps {
   appName: string;
@@ -53,13 +70,18 @@ export function Hero({
   warnCopy('Hero → h1', h1Marked, 10);
   warnCopy('Hero → subtítulo', subtitleMarked, 14);
   const subtitulo = truncarMarcado(subtitleMarked, 14);
+  const reduce = useReducedMotion();
 
   return (
     <section id={id} className="relative overflow-hidden">
-      {/* Fondo con profundidad: mesh/radial sutil del acento — nunca fill plano */}
-      <div
+      {/* Fondo con profundidad: mesh/radial sutil del acento — nunca fill plano.
+          "Respira" muy lento (12s, casi imperceptible): da sensación de vida sin
+          caer en el glow/neón que el sistema de NUA evita a propósito. */}
+      <motion.div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
+        animate={reduce ? undefined : { scale: [1, 1.04, 1], opacity: [0.9, 1, 0.9] }}
+        transition={reduce ? undefined : { duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           background:
             'radial-gradient(900px 480px at 50% -10%, color-mix(in oklab, var(--accent) 8%, transparent) 0%, transparent 60%), ' +
@@ -81,33 +103,44 @@ export function Hero({
           )}
         </header>
 
-        {/* Carga inmediata: fade simple 300ms — el LCP manda (55 T4) */}
+        {/* Entrada escalonada: título → subtítulo → CTA → prueba social → Dial,
+            cada uno 70ms tras el anterior (LCP no se resiente: el H1 sigue
+            siendo lo primero en pintar, solo su aparición ya no es un solo golpe). */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+          variants={contenedor}
+          initial="hidden"
+          animate="visible"
           className="mx-auto flex max-w-[820px] flex-col items-center pt-10 text-center md:pt-16"
         >
           {/* H1: bold completo por defecto; el acento lo pone el [acento] del copy */}
-          <h1 className="text-balance text-[40px] font-bold leading-[1.08] tracking-[-0.01em] text-[var(--text-primary)] [font-family:var(--font-display)] md:text-[60px]">
+          <motion.h1
+            variants={pieza}
+            className="text-balance text-[40px] font-bold leading-[1.08] tracking-[-0.01em] text-[var(--text-primary)] [font-family:var(--font-display)] md:text-[60px]"
+          >
             <MarkedCopy text={h1Marked} />
-          </h1>
+          </motion.h1>
 
-          <p className="mt-4 max-w-[560px] text-[17px] leading-relaxed text-[var(--text-secondary)] md:text-[18px]">
+          <motion.p
+            variants={pieza}
+            className="mt-4 max-w-[560px] text-[17px] leading-relaxed text-[var(--text-secondary)] md:text-[18px]"
+          >
             <MarkedCopy text={subtitulo} />
-          </p>
+          </motion.p>
 
-          <div className="mt-6 w-full sm:w-auto">
+          <motion.div variants={pieza} className="mt-6 w-full sm:w-auto">
             <CtaButton href={ctaHref}>{ctaLabel}</CtaButton>
-          </div>
+          </motion.div>
 
           {/* Franja de prueba social: 8-12px bajo el CTA — SOLO números reales */}
           {socialProof && (
-            <div className="mt-3 text-[13px] text-[var(--text-secondary)]">{socialProof}</div>
+            <motion.div variants={pieza} className="mt-3 text-[13px] text-[var(--text-secondary)]">
+              {socialProof}
+            </motion.div>
           )}
 
-          {/* Visual del producto: asoma en el primer viewport e invita al scroll */}
-          <div className="mt-10 w-full max-w-[720px]">
+          {/* Visual del producto: asoma en el primer viewport e invita al scroll —
+              entrada propia (escala leve), es el objeto que diferencia a NUA. */}
+          <motion.div variants={piezaVisual} className="mt-10 w-full max-w-[720px]">
             {visual ? (
               <div className="overflow-hidden rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--accent)_18%,transparent)] shadow-[var(--shadow-2)]">
                 {visual}
@@ -122,7 +155,7 @@ export function Hero({
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </section>
