@@ -14,6 +14,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
@@ -170,6 +172,67 @@ export function GraficoAbandono({ pasos }: { pasos: { paso: number; valor: numbe
           />
           <Bar dataKey="valor" fill={COLOR_BARRA} radius={[6, 6, 0, 0]} isAnimationActive animationDuration={500} />
         </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/** Cuántas opiniones cayeron en cada nivel (1-5) — de dónde sale el promedio. */
+export function GraficoDistribucionNiveles({ niveles }: { niveles: { nivel: number; cantidad: number }[] }) {
+  const datos = niveles.map((n) => ({ etiqueta: `${n.nivel}`, valor: n.cantidad }));
+  return (
+    <div className="h-[140px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={datos} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+          <CartesianGrid vertical={false} stroke="var(--text-tertiary)" strokeOpacity={0.15} />
+          <XAxis dataKey="etiqueta" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
+          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} width={24} />
+          <RechartsTooltip
+            cursor={{ fill: 'var(--surface-2)' }}
+            contentStyle={{
+              background: 'var(--text-primary)',
+              border: 'none',
+              borderRadius: 'var(--radius-inner)',
+              color: 'var(--bg)',
+              fontSize: 12,
+            }}
+          />
+          <Bar dataKey="valor" fill={COLOR_BARRA} radius={[6, 6, 0, 0]} isAnimationActive animationDuration={500} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/** Promedio de satisfacción mes a mes — hasta 6 meses con datos reales. */
+export function GraficoEvolucionCSAT({ meses }: { meses: { etiqueta: string; promedio: number; cantidad: number }[] }) {
+  return (
+    <div className="h-[160px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={meses} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
+          <CartesianGrid vertical={false} stroke="var(--text-tertiary)" strokeOpacity={0.15} />
+          <XAxis dataKey="etiqueta" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
+          <YAxis domain={[1, 5]} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} width={20} />
+          <RechartsTooltip
+            formatter={(valor) => (typeof valor === 'number' ? valor.toFixed(1) : valor)}
+            contentStyle={{
+              background: 'var(--text-primary)',
+              border: 'none',
+              borderRadius: 'var(--radius-inner)',
+              color: 'var(--bg)',
+              fontSize: 12,
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="promedio"
+            stroke={COLOR_BARRA}
+            strokeWidth={2.5}
+            dot={{ r: 3, fill: COLOR_BARRA }}
+            isAnimationActive
+            animationDuration={500}
+          />
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );

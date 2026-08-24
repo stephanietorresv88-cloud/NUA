@@ -25,7 +25,15 @@ import {
 import { crearClienteServidor } from '@/lib/supabase/server';
 import { alternarAdmin } from './acciones';
 import { FormularioAccesoManual } from './acceso-manual';
-import { GraficoAbandono, GraficoEmbudo, InfoTooltip, NumeroContado, Tendencia } from './ui';
+import {
+  GraficoAbandono,
+  GraficoDistribucionNiveles,
+  GraficoEmbudo,
+  GraficoEvolucionCSAT,
+  InfoTooltip,
+  NumeroContado,
+  Tendencia,
+} from './ui';
 
 export const dynamic = 'force-dynamic'; // datos del dueño, nunca cacheados entre visitas
 
@@ -140,7 +148,8 @@ export default async function AdminPanel() {
     valor: conteoPorPaso[i + 1] ?? 0,
   }));
 
-  // OPINIONES
+  // OPINIONES — incluye lo que llega por la tarjeta de Ajustes Y por la
+  // encuesta emergente (misma tabla `feedback`, dos mecanismos de captura).
   const [{ count: totalOpiniones }, { data: opinionesRecientes }, { data: todasCalificaciones }] =
     await Promise.all([
       supabase.from('feedback').select('*', { count: 'exact', head: true }),
@@ -149,12 +158,34 @@ export default async function AdminPanel() {
         .select('calificacion, comentario, created_at')
         .order('created_at', { ascending: false })
         .limit(10),
-      supabase.from('feedback').select('calificacion'),
+      supabase.from('feedback').select('calificacion, created_at'),
     ]);
   const calificacionPromedio =
     todasCalificaciones && todasCalificaciones.length > 0
       ? todasCalificaciones.reduce((suma, f) => suma + f.calificacion, 0) / todasCalificaciones.length
       : null;
+
+  // Distribución por nivel (1-5) — cuántas opiniones cayeron en cada cara.
+  const distribucionPorNivel = [1, 2, 3, 4, 5].map((nivel) => ({
+    nivel,
+    cantidad: (todasCalificaciones ?? []).filter((f) => f.calificacion === nivel).length,
+  }));
+
+  // Evolución mensual: promedio y cantidad por mes, últimos 6 meses con datos.
+  const FORMATO_MES = new Intl.DateTimeFormat('es', { month: 'short', year: '2-digit' });
+  const porMes = new Map<string, { suma: number; cantidad: number; fecha: Date }>();
+  for (const f of todasCalificaciones ?? []) {
+    const fecha = new Date(f.created_at);
+    const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+    const entrada = porMes.get(clave) ?? { suma: 0, cantidad: 0, fecha: new Date(fecha.getFullYear(), fecha.getMonth(), 1) };
+    entrada.suma += f.calificacion;
+    entrada.cantidad += 1;
+    porMes.set(clave, entrada);
+  }
+  const evolucionMensual = Array.from(porMes.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([, v]) => ({ etiqueta: FORMATO_MES.format(v.fecha), promedio: v.suma / v.cantidad, cantidad: v.cantidad }));
 
   const filas = (eventosVentana ?? []) as FilaEvento[];
   const actuales = filas.filter((f) => f.created_at >= inicioActual);
@@ -467,7 +498,9 @@ export default async function AdminPanel() {
       <section className="flex flex-col gap-3">
         <TituloSeccion icono={MessageSquare}>Opiniones</TituloSeccion>
         {!totalOpiniones || totalOpiniones === 0 ? (
-          <TarjetaSinDatos>Sin opiniones todavía. Aparecen aquí en cuanto alguien conteste en Ajustes.</TarjetaSinDatos>
+          <TarjetaSinDatos>
+            Sin opiniones todavía. Aparecen aquí en cuanto alguien conteste en Ajustes o en la encuesta emergente.
+          </TarjetaSinDatos>
         ) : (
           <>
             <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] px-4 py-4">
@@ -478,6 +511,23 @@ export default async function AdminPanel() {
                 promedio de {totalOpiniones} {totalOpiniones === 1 ? 'opinión' : 'opiniones'}
               </p>
             </div>
+
+            {evolucionMensual.length > 1 && (
+              <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] px-4 pb-2 pt-4">
+                <p className="mb-1 text-[length:var(--txt-label)] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                  Evolución mensual
+                </p>
+                <GraficoEvolucionCSAT meses={evolucionMensual} />
+              </div>
+            )}
+
+            <div className="rounded-[var(--radius-card)] border border-[color-mix(in_oklab,var(--text-tertiary)_18%,transparent)] bg-[var(--surface)] px-4 pb-2 pt-4">
+              <p className="mb-1 text-[length:var(--txt-label)] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                Respuestas por nivel
+              </p>
+              <GraficoDistribucionNiveles niveles={distribucionPorNivel} />
+            </div>
+
             <ul className="flex flex-col gap-2">
               {(opinionesRecientes ?? []).map((o, i) => (
                 <li

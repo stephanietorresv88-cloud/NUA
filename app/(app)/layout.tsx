@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Home as IconHome, Library, Settings } from 'lucide-react';
 import { BotonAyuda } from '@/components/BotonAyuda';
+import { EncuestaSatisfaccion } from '@/components/EncuestaSatisfaccion';
 
 const NAV = [
   { id: '/hoy', label: 'Hoy', icono: IconHome },
@@ -40,6 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="relative flex min-h-dvh flex-col">{children}</div>
 
       <BotonAyuda />
+      <EncuestaSatisfaccion />
 
       <nav
         aria-label="Navegación principal"
