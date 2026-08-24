@@ -5,18 +5,25 @@
 // dato, un solo lugar para verlo en el panel) — pero el mecanismo de cuándo
 // aparecer es propio de este componente y no toca nada de Ajustes.
 //
-// Reglas de cuándo aparece (pedido de la dueña, 2026-08-21):
+// Reglas de cuándo aparece (pedido de la dueña, 2026-08-21; ajustado 2026-08-24
+// tras verla aparecer como lo PRIMERO al abrir /hoy — la dueña la quiere "al
+// final", no en la pantalla de hacer el ritual):
+//   - NUNCA en /hoy (es la pantalla de "voy a hacer algo", no de "ya hice
+//     algo") ni en /rutina (un ritual en curso no se interrumpe). Solo puede
+//     aparecer en /archivo o /ajustes — pantallas a las que se llega DESPUÉS
+//     de usar la app.
 //   - Al menos 4 días de uso real (perfiles.created_at con cuenta; primera
 //     visita en localStorage sin cuenta).
 //   - Máximo una vez al mes — se marca "mostrada" en cuanto aparece, aunque
 //     la cierren sin contestar, para no volver a insistir antes de tiempo.
-//   - Vive en el layout de Hoy/Archivo/Ajustes, nunca en /rutina — no
-//     interrumpe un ritual en curso.
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { track } from '@/lib/analytics';
+
+const PANTALLAS_PERMITIDAS = new Set(['/archivo', '/ajustes']);
 
 const DIAS_MINIMOS_DE_USO = 4;
 const DIAS_ENTRE_ENCUESTAS = 30;
@@ -69,11 +76,16 @@ function Cara({ nivel, color }: { nivel: 1 | 2 | 3 | 4 | 5; color: string }) {
 
 export function EncuestaSatisfaccion() {
   const reduce = useReducedMotion();
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [respondido, setRespondido] = useState(false);
 
   useEffect(() => {
+    // Solo puede aparecer en pantallas de "después de usar" — nunca en /hoy
+    // (donde se arma el ritual) ni en /rutina (donde se hace).
+    if (!PANTALLAS_PERMITIDAS.has(pathname)) return;
+
     let vivo = true;
     (async () => {
       // Ya se mostró hace menos de 30 días: no se evalúa nada más.
@@ -121,7 +133,7 @@ export function EncuestaSatisfaccion() {
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [pathname]);
 
   const elegir = async (nivel: 1 | 2 | 3 | 4 | 5) => {
     if (enviando) return;

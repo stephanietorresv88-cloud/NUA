@@ -2114,17 +2114,50 @@ export const RUTINAS: Rutina[] = [
   },
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// EL CIERRE DE GRATITUD — pedido de la dueña (2026-08-24): "dale full, sea
+// bueno o malo el día, es algo muy pequeño que me parece muy lindo". Se
+// inyecta AQUÍ, en el único lugar por el que pasan las 20+ rutinas antes de
+// salir del módulo — así aplica a TODAS sin tocar ni un bloque escrito a
+// mano arriba, y sin riesgo de desincronizar `cadena` y `bloques` en cada una.
+//
+// Se le reserva el último 8% del tiempo total (compactando el resto
+// proporcionalmente) — en 5 min son ~24s, suficiente para pensar tres cosas
+// sin alargar la promesa de duración de la rutina.
+const FRACCION_GRATITUD = 0.08;
+
+const BLOQUE_GRATITUD: Omit<Bloque, 'desde' | 'hasta'> = {
+  id: 'gratitud',
+  titulo: 'Antes de cerrar',
+  tipo: 'ensayar',
+  guia: 'Piensa en tres cosas que tienes hoy. No hace falta que sean grandes.',
+  marco: 'No necesitas sentirte agradecida para intentarlo.',
+};
+
+function conGratitud(rutina: Rutina): Rutina {
+  const factor = 1 - FRACCION_GRATITUD;
+  return {
+    ...rutina,
+    cadena: [...rutina.cadena, 'Agradezco'],
+    bloques: [
+      ...rutina.bloques.map((b) => ({ ...b, desde: b.desde * factor, hasta: b.hasta * factor })),
+      { ...BLOQUE_GRATITUD, desde: rutina.duracion * factor, hasta: rutina.duracion },
+    ],
+  };
+}
+
 /** Elige la rutina del día por duración. Determinista mientras no haya historial:
  *  cuando exista base de datos, aquí entra la rotación anti-fatiga. */
 export function rutinaPara(duracion: DuracionRutina, id?: string): Rutina {
   if (id) {
     const pedida = RUTINAS.find((r) => r.id === id);
-    if (pedida) return pedida;
+    if (pedida) return conGratitud(pedida);
   }
-  return RUTINAS.find((r) => r.duracion === duracion) ?? RUTINAS[0]!;
+  const base = RUTINAS.find((r) => r.duracion === duracion) ?? RUTINAS[0]!;
+  return conGratitud(base);
 }
 
 /** Las rutinas disponibles de una duración. */
 export function rutinasDe(duracion: DuracionRutina): Rutina[] {
-  return RUTINAS.filter((r) => r.duracion === duracion);
+  return RUTINAS.filter((r) => r.duracion === duracion).map(conGratitud);
 }
