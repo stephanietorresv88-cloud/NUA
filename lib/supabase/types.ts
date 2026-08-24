@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      avisos_inactividad: {
+        Row: {
+          enviado_at: string
+          user_id: string
+        }
+        Insert: {
+          enviado_at?: string
+          user_id: string
+        }
+        Update: {
+          enviado_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       error_log: {
         Row: {
           context: string | null

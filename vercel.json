@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/racha-en-riesgo",
       "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/recordatorio-inactividad",
+      "schedule": "0 22 * * *"
     }
   ]
 }
