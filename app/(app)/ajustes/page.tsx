@@ -10,6 +10,7 @@ import { motion, type Variants } from 'motion/react';
 import { LogOut, Mail, Star } from 'lucide-react';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { track } from '@/lib/analytics';
+import { BotonNotificaciones } from '@/components/BotonNotificaciones';
 
 const lista: Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } };
 const item: Variants = {
@@ -81,6 +82,8 @@ export default function Ajustes() {
                 <p className="truncate text-[length:var(--txt-body)] font-medium">{correo}</p>
               </div>
             </div>
+
+            <BotonNotificaciones userId={userId} />
 
             <motion.button
               type="button"

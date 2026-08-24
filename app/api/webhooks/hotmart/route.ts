@@ -37,6 +37,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verificarHotmart, esReciente } from '@/lib/hotmart-verify';
 import { enviarBienvenida, enviarCancelacion } from '@/lib/email';
+import { enviarPush } from '@/lib/push';
 import type { Database } from '@/lib/supabase/types';
 import crypto from 'node:crypto';
 
@@ -220,6 +221,21 @@ export async function POST(req: NextRequest) {
     // correo de verdad.
     if (CORREO_OK.test(correo)) {
       await enviarMejorEsfuerzo(() => enviarCancelacion(correo), 'cancelación');
+      // Push además del correo — mismo aviso, refuerzo inmediato. Best-effort:
+      // si no tiene cuenta o no activó notificaciones, enviarPush no hace nada.
+      const { data: perfilCancelado } = await admin.from('perfiles').select('id').eq('email', correo).maybeSingle();
+      if (perfilCancelado) {
+        await enviarMejorEsfuerzo(
+          () =>
+            enviarPush({
+              title: 'Tu suscripción quedó cancelada',
+              body: 'Tu acceso sigue activo hasta el fin de tu ciclo.',
+              url: '/ajustes',
+              user_ids: [perfilCancelado.id],
+            }),
+          'push de cancelación',
+        );
+      }
     }
   } else {
     await registrarLog(admin, { event_id: eventId, type: evento, result: 'ignored', detail: 'evento sin mapear' });
