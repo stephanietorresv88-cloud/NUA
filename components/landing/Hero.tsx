@@ -8,7 +8,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion, type Variants } from 'motion/react';
+import { motion, type Variants } from 'motion/react';
 import { Camera } from 'lucide-react';
 import { CtaButton } from './ui';
 import { MarkedCopy, truncarMarcado, warnCopy } from './MarkedCopy';
@@ -70,18 +70,15 @@ export function Hero({
   warnCopy('Hero → h1', h1Marked, 10);
   warnCopy('Hero → subtítulo', subtitleMarked, 14);
   const subtitulo = truncarMarcado(subtitleMarked, 14);
-  const reduce = useReducedMotion();
-
   return (
     <section id={id} className="relative overflow-hidden">
       {/* Fondo con profundidad: mesh/radial sutil del acento — nunca fill plano.
-          "Respira" muy lento (12s, casi imperceptible): da sensación de vida sin
-          caer en el glow/neón que el sistema de NUA evita a propósito. */}
-      <motion.div
+          Estático a propósito (2026-08-24): la versión animada (escala en bucle)
+          causaba un efecto de "doble imagen" en el navegador real de la dueña —
+          no vale el riesgo visual por un detalle tan sutil. */}
+      <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
-        animate={reduce ? undefined : { scale: [1, 1.04, 1], opacity: [0.9, 1, 0.9] }}
-        transition={reduce ? undefined : { duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           background:
             'radial-gradient(900px 480px at 50% -10%, color-mix(in oklab, var(--accent) 8%, transparent) 0%, transparent 60%), ' +
