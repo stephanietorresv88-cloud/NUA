@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, animate, motion, useReducedMotion, type Variants } from 'motion/react';
 import Lottie from 'lottie-react';
 import { ArrowRight, Flame, Snowflake, Sparkles, X } from 'lucide-react';
+import { ChecklistPrimerosPasos } from '@/components/ChecklistPrimerosPasos';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { track, trackAppAbierta, trackSesionDiaria } from '@/lib/analytics';
 import { rutinasDe, type DuracionRutina } from '@/lib/rutinas';
@@ -167,6 +168,9 @@ export default function Hoy() {
   const [errorCarga, setErrorCarga] = useState(false);
   const [entrandoARitual, setEntrandoARitual] = useState(false);
   const [reintentando, setReintentando] = useState(false);
+  // Primeros pasos, ítem 1: no hay rastro nativo de "tocó el dial" — se guarda
+  // un flag propio, la única acción del checklist que no viene de otro lado.
+  const [dialTocado, setDialTocado] = useState(false);
   const arrastrando = useRef(false);
   const entrandoRef = useRef(false);
   const seguirRef = useRef<HTMLButtonElement>(null);
@@ -265,7 +269,14 @@ export default function Hoy() {
   useEffect(() => {
     trackAppAbierta();
     trackSesionDiaria();
+    if (leeRecuerdo('nua.dialTocado') === '1') setDialTocado(true);
   }, []);
+
+  function marcarDialTocado() {
+    if (dialTocado) return;
+    recuerda('nua.dialTocado', '1');
+    setDialTocado(true);
+  }
 
   useEffect(() => {
     let vivo = true;
@@ -463,6 +474,19 @@ export default function Hoy() {
           )}
         </motion.header>
 
+        {/* ── PRIMEROS PASOS — solo hasta completar las 4 acciones (o cerrarlo);
+            reusa datos que esta pantalla ya calcula, no un progreso paralelo. ── */}
+        {!cargando && (
+          <ChecklistPrimerosPasos
+            pasos={[
+              { id: 'dial', etiqueta: 'Marca cómo llegas hoy', hecho: dialTocado },
+              { id: 'ritual', etiqueta: 'Completa tu primer ritual', hecho: totalSesiones > 0 },
+              { id: 'cuenta', etiqueta: 'Guarda tu cuenta con tu correo', hecho: conCuenta },
+              { id: 'racha', etiqueta: 'Vuelve un segundo día', hecho: racha.actual >= 2 },
+            ]}
+          />
+        )}
+
         {cargando ? (
           <div
             aria-hidden="true"
@@ -499,6 +523,7 @@ export default function Hoy() {
                   onPointerDown={(e) => {
                     arrastrando.current = true;
                     seleccionarPorAngulo(e.clientX, e.clientY, e.currentTarget);
+                    marcarDialTocado();
                   }}
                   onPointerMove={(e) => {
                     if (arrastrando.current) seleccionarPorAngulo(e.clientX, e.clientY, e.currentTarget);
@@ -531,7 +556,14 @@ export default function Hoy() {
                   {/* Única zona clicable: los arcos de arriba son decorativos. */}
                   <g fill="none" stroke="transparent" strokeWidth={44} style={{ pointerEvents: 'stroke' }}>
                     {ARCOS_TOQUE.map((a) => (
-                      <path key={`toque-${a.id}`} d={a.d} onClick={() => setEleccion(a.id)} />
+                      <path
+                        key={`toque-${a.id}`}
+                        d={a.d}
+                        onClick={() => {
+                          setEleccion(a.id);
+                          marcarDialTocado();
+                        }}
+                      />
                     ))}
                   </g>
                   <motion.g
@@ -568,7 +600,10 @@ export default function Hoy() {
                       role="radio"
                       aria-checked={on}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => setEleccion(e.id)}
+                      onClick={() => {
+                        setEleccion(e.id);
+                        marcarDialTocado();
+                      }}
                       style={
                         on
                           ? { backgroundColor: `color-mix(in oklab, ${e.color} 55%, var(--surface))`, borderColor: e.color }
@@ -670,6 +705,21 @@ export default function Hoy() {
                   <p className="text-[length:var(--txt-body)] leading-snug text-[var(--text-secondary)]">
                     Tu primera victoria va a vivir aquí en cuanto termines tu ritual de hoy.
                   </p>
+                  <button
+                    type="button"
+                    disabled={entrandoARitual}
+                    aria-busy={entrandoARitual}
+                    onClick={() => {
+                      if (entrandoRef.current) return;
+                      entrandoRef.current = true;
+                      setEntrandoARitual(true);
+                      router.push(`/rutina?min=${activo.minutos}&id=${rutinaHoy.id}`);
+                    }}
+                    className="flex h-11 items-center gap-1.5 rounded-[var(--radius-button)] bg-[var(--accent)] px-5 text-[length:var(--txt-label)] font-semibold text-[var(--sobre-acento)] [touch-action:manipulation] disabled:opacity-70"
+                  >
+                    {entrandoARitual ? 'Entrando…' : 'Empezar mi ritual de hoy'}
+                    <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
+                  </button>
                 </div>
               ) : (
                 <ul className="flex flex-col gap-2">
