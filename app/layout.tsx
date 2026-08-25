@@ -41,6 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
        en ese atributo. Es el patrón estándar para scripts de tema/clase. */
     <html lang="es" className={`${gloock.variable} ${figtree.variable}`} suppressHydrationWarning>
       <head>
+        {/* Verificación de dominio de Meta Business (Musae Agencia Digital) —
+            confirma que somos dueños de clubnua.es, para medir mejor los
+            anuncios en iPhone. No afecta nada más del sitio. */}
+        <meta name="facebook-domain-verification" content="0zn7jtzkzw377em3yse7hnag0sf0yt" />
         {/* FAIL-OPEN DEL REVEAL. El kit anima las secciones desde opacity:0 y solo
             las muestra cuando el IntersectionObserver dispara. Si el JS no corre
             (falla, tarda, o es un rastreador), la página queda EN BLANCO — en una
