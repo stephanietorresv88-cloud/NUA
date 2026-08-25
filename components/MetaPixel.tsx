@@ -10,7 +10,11 @@
 import Script from 'next/script';
 
 export function MetaPixel() {
-  const id = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  // .trim(): un salto de línea o espacio pegado al copiar el ID en Vercel
+  // rompía TODO el script (un salto de línea dentro de comillas simples es
+  // inválido en JS) — verificado en producción, 2026-08-24. Nunca confiar en
+  // que una variable de entorno llegue limpia.
+  const id = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
   if (!id) return null;
 
   // dangerouslySetInnerHTML en vez de children: con children (string) esta
