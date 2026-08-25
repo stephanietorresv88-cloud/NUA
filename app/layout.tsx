@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Gloock, Figtree } from 'next/font/google';
 import { AuthBridge } from '@/components/AuthBridge';
+import { MetaPixel } from '@/components/MetaPixel';
 import './globals.css';
 
 // Las dos familias de FICHA-ARTE.md. Los nombres de variable coinciden con
@@ -23,7 +24,7 @@ const figtree = Figtree({
 export const metadata: Metadata = {
   title: 'NUA — Cuídate hoy, aunque solo tengas cinco minutos',
   description:
-    'Marcas cómo llegas y el Dial de Energía arma tu ritual de hoy: 3, 10 o 30 minutos. La app que se adapta a tu día, no al revés.',
+    'Marcas cómo llegas y el Dial de Energía arma tu ritual de hoy: 5, 15 o 20 minutos. La app que se adapta a tu día, no al revés.',
   openGraph: {
     title: 'NUA — Cuídate hoy, aunque solo tengas cinco minutos',
     description:
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="antialiased">
+        <MetaPixel />
         <AuthBridge />
         {children}
       </body>

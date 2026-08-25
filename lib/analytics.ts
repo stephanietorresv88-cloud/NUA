@@ -68,12 +68,38 @@ function esQa(): boolean {
 
 const supabase = typeof window !== 'undefined' ? crearClienteNavegador() : null;
 
-/** Único punto de entrada para registrar un evento. Nombre en objeto_accion (36). */
+// Mapa de eventos propios → evento ESTÁNDAR de Meta (los que Meta reconoce y
+// usa para optimizar a quién le muestra el anuncio) — solo para los pasos del
+// embudo que tienen un equivalente real. Lo demás no se manda al Pixel:
+// mandar eventos de más solo le agrega ruido a la optimización, no ayuda.
+const EVENTO_META: Record<string, string> = {
+  onboarding_iniciado: 'Lead',
+  paywall_visto: 'ViewContent',
+  checkout_iniciado: 'InitiateCheckout',
+};
+
+/** fbq() vive en window, sin tipos oficiales — se declara mínimo para no usar `any` suelto. */
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+  }
+}
+
+function trackMeta(evento: string) {
+  if (typeof window === 'undefined' || !window.fbq) return;
+  const estandar = EVENTO_META[evento];
+  if (estandar) window.fbq('track', estandar);
+}
+
+/** Único punto de entrada para registrar un evento. Nombre en objeto_accion (36).
+ *  Además de guardarlo en Supabase (la fuente de verdad del backoffice), dispara
+ *  el equivalente en el Pixel de Meta si el evento tiene uno mapeado arriba. */
 export async function track(
   evento: string,
   metadata: Record<string, Json> = {},
   userId?: string,
 ): Promise<void> {
+  trackMeta(evento);
   if (!supabase) return;
   try {
     await supabase.from('event_log').insert({
